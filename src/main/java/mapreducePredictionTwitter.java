@@ -26,13 +26,13 @@ public class mapreducePredictionTwitter {
         // which includes (source, destination) and (destination, source)
         JavaPairRDD<Long, Long> edges = lines.flatMapToPair(new PairFlatMapFunction<String, Long, Long>() {
             @Override
-            public Iterable<Tuple2<Long, Long>> call(String s) {
+            public Iterator<Tuple2<Long, Long>> call(String s) {
                 String[] nodes = s.split(" ");
                 long start = Long.parseLong(nodes[0]);
                 long end = Long.parseLong(nodes[1]);
                 // Note that edges must be reciprocal
                 return Arrays.asList(new Tuple2<Long, Long>(start, end),
-                        new Tuple2<Long, Long>(end, start));
+                        new Tuple2<Long, Long>(end, start)).iterator();
             }
         });
 
@@ -49,7 +49,7 @@ public class mapreducePredictionTwitter {
         // Step 7: create a new JavaPairRDD which will generate possible triads
         JavaPairRDD<Tuple2<Long, Long>, Long> possibleTriads = triads.flatMapToPair(new PairFlatMapFunction<Tuple2<Long, Iterable<Long>>, Tuple2<Long, Long>, Long>() {
             @Override
-            public Iterable<Tuple2<Tuple2<Long, Long>, Long>> call(Tuple2<Long, Iterable<Long>> s) {
+            public Iterator<Tuple2<Tuple2<Long, Long>, Long>> call(Tuple2<Long, Iterable<Long>> s) {
                 // s._1 = Long (as a key)
                 // s._2 = Iterable<Long> (as values)
                 Iterable<Long> values = s._2;
@@ -80,7 +80,7 @@ public class mapreducePredictionTwitter {
                     }
                 }
 
-                return result;
+                return result.iterator();
             }
         });
 
@@ -104,7 +104,7 @@ public class mapreducePredictionTwitter {
         // Step 9: create a new JavaPairRDD, which will generate all triangles
         JavaRDD<Tuple3<Long, Long, Long>> trianglesWithDuplicates = triadsGrouped.flatMap(new FlatMapFunction<Tuple2<Tuple2<Long, Long>, Iterable<Long>>, Tuple3<Long, Long, Long>>() {
             @Override
-            public Iterable<Tuple3<Long, Long, Long>> call(Tuple2<Tuple2<Long, Long>, Iterable<Long>> s) {
+            public Iterator<Tuple3<Long, Long, Long>> call(Tuple2<Tuple2<Long, Long>, Iterable<Long>> s) {
                 // s._1 = Tuple2<Long,Long> (as a key) = "<nodeA><,><nodeB>"
                 // s._2 = Iterable<Long> (as a values) = {0, n1, n2, n3, ...} or {n1, n2, n3, ...}
                 // note that 0 is a fake node, which does not exist
@@ -127,7 +127,7 @@ public class mapreducePredictionTwitter {
                     if (list.isEmpty()) {
                         // no triangles found
                         // return null;
-                        return result;
+                        return result.iterator();
                     }
                     // emit triangles
                     for (long node : list) {
@@ -141,10 +141,10 @@ public class mapreducePredictionTwitter {
                 } else {
                     // no triangles found
                     // return null;
-                    return result;
+                    return result.iterator();
                 }
 
-                return result;
+                return result.iterator();
 
 
             }
