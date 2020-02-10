@@ -19,6 +19,7 @@ public class mapreducePredictionTwitter {
         JavaSparkContext sc = new JavaSparkContext(new SparkConf().setAppName("SparkMapReduce").setMaster("local"));
         // Step 4: create the first RDD from input path HDFS input text file representing a graph
         // records are representing as JavaRDD<String>
+        //JavaRDD<String> lines = sc.textFile("/user/hadoop/data/graphx/40k.txt");
         JavaRDD<String> lines = sc.textFile("/Users/User/IdeaProject/mapreduceexperiment/src/main/resources/40k.txt");
 
         // Step 5: Create a new JavaPairRDD for all edges
@@ -174,9 +175,6 @@ public class mapreducePredictionTwitter {
         //
         System.exit(0);
     }
-
-
-
 //    private static JavaSparkContext sc;
 //
 //    public mapreducePredictionTwitter(JavaSparkContext sc){
