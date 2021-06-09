@@ -9,19 +9,20 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import scala.Tuple3;
 import java.util.*;
 
-//https://www.jetbrains.com/help/idea/creating-and-running-your-first-java-application.html
-
 public class mapreducePredictionTwitter {
 
     public static void main(String[] args) throws Exception {
-
+        if (args.length == 0) {
+            System.out.println("dude, i need at least one parameter");
+        }
+        String path = args[0];
         // Step 3: create context object
-        JavaSparkContext sc = new JavaSparkContext(new SparkConf().setAppName("SparkMapReduce").setMaster("yarn"));
-	sc.hadoopConfiguration().set("mapred.max.split.size", "25000");
+        JavaSparkContext sc = new JavaSparkContext(new SparkConf().setAppName("SparkMapReduce").setMaster("local[*]"));
+        sc.hadoopConfiguration().set("mapred.max.split.size", "25000");
 
         // Step 4: create the first RDD from input path HDFS input text file representing a graph
         // records are representing as JavaRDD<String>
-        JavaRDD<String> lines = sc.textFile("/user/hadoop/data/graphx/100k.txt");
+        JavaRDD<String> lines = sc.textFile(path);
         //JavaRDD<String> lines = sc.textFile("/Users/User/IdeaProject/mapreduceexperiment/src/main/resources/40k.txt");
 
         // Step 5: Create a new JavaPairRDD for all edges
@@ -96,13 +97,6 @@ public class mapreducePredictionTwitter {
         // Step 8: create a new JavaPairRDD, which will generate triangles
         JavaPairRDD<Tuple2<Long, Long>, Iterable<Long>> triadsGrouped = possibleTriads.groupByKey();
 
-        // To debug step 8
-        //List<Tuple2<Tuple2<Long, Long>, Iterable<Long>>> debug3 = triadsGrouped.collect();
-        //for (Tuple2<Tuple2<Long, Long>, Iterable<Long>> t2 : debug3) {
-        //    System.out.println("debug3 t2._1=" + t2._1);
-        //    System.out.println("debug3 t2._2=" + t2._2);
-        //}
-
         // Step 9: create a new JavaPairRDD, which will generate all triangles
         JavaRDD<Tuple3<Long, Long, Long>> trianglesWithDuplicates = triadsGrouped.flatMap(new FlatMapFunction<Tuple2<Tuple2<Long, Long>, Iterable<Long>>, Tuple3<Long, Long, Long>>() {
             @Override
@@ -152,24 +146,9 @@ public class mapreducePredictionTwitter {
             }
         });
 
-        // debug step 9
-        //System.out.println("=== Triangles with Duplicates ===");
-        //List<Tuple3<Long, Long, Long>> debug4 = trianglesWithDuplicates.collect();
-        //for (Tuple3<Long, Long, Long> t3 : debug4) {
-        //    //System.out.println(t3._1 + "," + t3._2+ "," + t3._3);
-        //    System.out.println("t3=" + t3);
-        //}
-
         // Step 10: eliminate duplicate triangles and create unique triangles
         JavaRDD<Tuple3<Long, Long, Long>> uniqueTriangles = trianglesWithDuplicates.distinct();
 
-        // debug step 10
-        //System.out.println("=== Unique Triangles ===");
-        //List<Tuple3<Long, Long, Long>> output = uniqueTriangles.collect();
-        //for (Tuple3<Long, Long, Long> t3 : output) {
-        //    //System.out.println(t3._1 + "," + t3._2+ "," + t3._3);
-        //    System.out.println("t3=" + t3);
-        //}
 
         // done
         sc.close();
@@ -177,19 +156,5 @@ public class mapreducePredictionTwitter {
         //
         System.exit(0);
     }
-//    private static JavaSparkContext sc;
-//
-//    public mapreducePredictionTwitter(JavaSparkContext sc){
-//        this.sc = sc;
-//    }
-//
-//    public void generateGraph(JavaSparkContext sc) {
-//
-//    }
-
-//    public static void main(String[] args) throws Exception {
-//        JavaSparkContext sc = new JavaSparkContext(new SparkConf().setAppName("SparkMapReduce").setMaster("local"));
-//        mapreducePredictionTwitter job = new mapreducePredictionTwitter(sc);
-//    }
 }
 
