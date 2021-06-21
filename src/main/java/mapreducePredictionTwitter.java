@@ -17,7 +17,7 @@ public class mapreducePredictionTwitter {
         }
         String path = args[0];
         // Step 3: create context object
-        JavaSparkContext sc = new JavaSparkContext(new SparkConf().setAppName("SparkMapReduce").setMaster("local[*]"));
+        JavaSparkContext sc = new JavaSparkContext(new SparkConf().setAppName("SparkMapReduce"));
         sc.hadoopConfiguration().set("mapred.max.split.size", "25000");
 
         // Step 4: create the first RDD from input path HDFS input text file representing a graph
