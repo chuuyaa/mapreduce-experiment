@@ -30,7 +30,7 @@ public class mapreducePredictionTwitter {
         JavaPairRDD<Long, Long> edges = lines.flatMapToPair(new PairFlatMapFunction<String, Long, Long>() {
             @Override
             public Iterator<Tuple2<Long, Long>> call(String s) {
-                String[] nodes = s.split("\t");
+                String[] nodes = s.split("\\s");
                 long start = Long.parseLong(nodes[0]);
                 long end = Long.parseLong(nodes[1]);
                 // Note that edges must be reciprocal
@@ -41,13 +41,6 @@ public class mapreducePredictionTwitter {
 
         // Step 6: create a new JavaPairRDD which will generate triads
         JavaPairRDD<Long, Iterable<Long>> triads = edges.groupByKey();
-
-        // For debugging, we collect all triads object and display them:
-        List<Tuple2<Long, Iterable<Long>>> debug1 = triads.collect();
-        for (Tuple2<Long, Iterable<Long>> t2 : debug1) {
-            System.out.println("debug1 t2._1=" + t2._1);
-            System.out.println("debug1 t2._2=" + t2._2);
-        }
 
         // Step 7: create a new JavaPairRDD which will generate possible triads
         JavaPairRDD<Tuple2<Long, Long>, Long> possibleTriads = triads.flatMapToPair(new PairFlatMapFunction<Tuple2<Long, Iterable<Long>>, Tuple2<Long, Long>, Long>() {
