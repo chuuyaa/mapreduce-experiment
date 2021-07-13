@@ -40,7 +40,7 @@ public class mapreducePredictionTwitter {
         });
 
         // Step 6: create a new JavaPairRDD which will generate triads
-        JavaPairRDD<Long, Iterable<Long>> triads = edges.groupByKey();
+        JavaPairRDD<Long, Iterable<Long>> triads = edges.groupByKey().cache();
 
         // Step 7: create a new JavaPairRDD which will generate possible triads
         JavaPairRDD<Tuple2<Long, Long>, Long> possibleTriads = triads.flatMapToPair(new PairFlatMapFunction<Tuple2<Long, Iterable<Long>>, Tuple2<Long, Long>, Long>() {
@@ -78,7 +78,7 @@ public class mapreducePredictionTwitter {
 
                 return result.iterator();
             }
-        });
+        }).cache();
 
         // To debug step 7, collect all possibleTriads objects and display them
         List<Tuple2<Tuple2<Long, Long>, Long>> debug2 = possibleTriads.collect();
@@ -88,7 +88,7 @@ public class mapreducePredictionTwitter {
         }
 
         // Step 8: create a new JavaPairRDD, which will generate triangles
-        JavaPairRDD<Tuple2<Long, Long>, Iterable<Long>> triadsGrouped = possibleTriads.groupByKey();
+        JavaPairRDD<Tuple2<Long, Long>, Iterable<Long>> triadsGrouped = possibleTriads.groupByKey().cache();
 
         // Step 9: create a new JavaPairRDD, which will generate all triangles
         JavaRDD<Tuple3<Long, Long, Long>> trianglesWithDuplicates = triadsGrouped.flatMap(new FlatMapFunction<Tuple2<Tuple2<Long, Long>, Iterable<Long>>, Tuple3<Long, Long, Long>>() {
@@ -137,7 +137,7 @@ public class mapreducePredictionTwitter {
 
 
             }
-        });
+        }).cache();
 
         // Step 10: eliminate duplicate triangles and create unique triangles
         JavaRDD<Tuple3<Long, Long, Long>> uniqueTriangles = trianglesWithDuplicates.distinct();
