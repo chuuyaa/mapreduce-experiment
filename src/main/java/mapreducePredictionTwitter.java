@@ -12,18 +12,18 @@ import java.util.*;
 public class mapreducePredictionTwitter {
 
     public static void main(String[] args) throws Exception {
-        if (args.length == 0) {
-            System.out.println("dude, i need at least one parameter");
-        }
-        String path = args[0];
+//        if (args.length == 0) {
+//            System.out.println("dude, i need at least one parameter");
+//        }
+        //String path = args[0];
+        String path = "C:/tmp/100k.txt";
         // Step 3: create context object
-        JavaSparkContext sc = new JavaSparkContext(new SparkConf().setAppName("SparkMapReduce"));
+        JavaSparkContext sc = new JavaSparkContext(new SparkConf().setAppName("SparkMapReduce").setMaster("local[*]"));
         sc.hadoopConfiguration().set("mapred.max.split.size", "25000");
 
         // Step 4: create the first RDD from input path HDFS input text file representing a graph
         // records are representing as JavaRDD<String>
         JavaRDD<String> lines = sc.textFile(path);
-        //JavaRDD<String> lines = sc.textFile("/Users/User/IdeaProject/mapreduceexperiment/src/main/resources/40k.txt");
 
         // Step 5: Create a new JavaPairRDD for all edges
         // which includes (source, destination) and (destination, source)
@@ -39,6 +39,8 @@ public class mapreducePredictionTwitter {
             }
         });
 
+        System.gc();
+
         // Step 6: create a new JavaPairRDD which will generate triads
         JavaPairRDD<Long, Iterable<Long>> triads = edges.groupByKey().cache();
 
@@ -51,13 +53,6 @@ public class mapreducePredictionTwitter {
                 Iterable<Long> values = s._2;
                 // we assume that no node has an ID of zero
                 List<Tuple2<Tuple2<Long, Long>, Long>> result = new ArrayList<Tuple2<Tuple2<Long, Long>, Long>>();
-
-                // Generate possible triads.
-                for (Long value : values) {
-                    Tuple2<Long, Long> k2 = new Tuple2<Long, Long>(s._1, value);
-                    Tuple2<Tuple2<Long, Long>, Long> k2v2 = new Tuple2<Tuple2<Long, Long>, Long>(k2, 0l);
-                    result.add(k2v2);
-                }
 
                 // RDD's values are immutable, so we have to copy the values
                 // copy values to valuesCopy
@@ -73,19 +68,14 @@ public class mapreducePredictionTwitter {
                         Tuple2<Long, Long> k2 = new Tuple2<Long, Long>(valuesCopy.get(i), valuesCopy.get(j));
                         Tuple2<Tuple2<Long, Long>, Long> k2v2 = new Tuple2<Tuple2<Long, Long>, Long>(k2, s._1);
                         result.add(k2v2);
+                        k2 = null;
+                        k2v2=null;
                     }
                 }
 
                 return result.iterator();
             }
         }).cache();
-
-        // To debug step 7, collect all possibleTriads objects and display them
-        List<Tuple2<Tuple2<Long, Long>, Long>> debug2 = possibleTriads.collect();
-        for (Tuple2<Tuple2<Long, Long>, Long> t2 : debug2) {
-            System.out.println("debug2 t2._1=" + t2._1);
-            System.out.println("debug2 t2._2=" + t2._2);
-        }
 
         // Step 8: create a new JavaPairRDD, which will generate triangles
         JavaPairRDD<Tuple2<Long, Long>, Iterable<Long>> triadsGrouped = possibleTriads.groupByKey().cache();
@@ -141,7 +131,13 @@ public class mapreducePredictionTwitter {
 
         // Step 10: eliminate duplicate triangles and create unique triangles
         JavaRDD<Tuple3<Long, Long, Long>> uniqueTriangles = trianglesWithDuplicates.distinct();
-
+        // Print out unique triangles
+        System.out.println("=== Unique Triangles ===");
+        List<Tuple3<Long, Long, Long>> output = uniqueTriangles.collect();
+        for (Tuple3<Long, Long, Long> t3 : output) {
+            //System.out.println(t3._1 + "," + t3._2+ "," + t3._3);
+            System.out.println("t3=" + t3);
+        }
 
         // done
         sc.close();
