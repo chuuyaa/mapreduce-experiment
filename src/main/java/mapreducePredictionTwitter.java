@@ -12,11 +12,11 @@ import java.util.*;
 public class mapreducePredictionTwitter {
 
     public static void main(String[] args) throws Exception {
-        if (args.length == 0) {
-            System.out.println("dude, i need at least one parameter");
-        }
-        String path = args[0];
-        //String path = "C:/tmp/100k.txt";
+//        if (args.length == 0) {
+//            System.out.println("dude, i need at least one parameter");
+//        }
+//        String path = args[0];
+        String path = "C:/tmp/100k.txt";
         // Step 3: create context object
         JavaSparkContext sc = new JavaSparkContext(new SparkConf().setAppName("SparkMapReduce").setMaster("local[*]"));
         sc.hadoopConfiguration().set("mapred.max.split.size", "25000");
@@ -39,10 +39,10 @@ public class mapreducePredictionTwitter {
             }
         });
 
-        System.gc();
+        //System.gc();
 
         // Step 6: create a new JavaPairRDD which will generate triads
-        JavaPairRDD<Long, Iterable<Long>> triads = edges.groupByKey().cache();
+        JavaPairRDD<Long, Iterable<Long>> triads = edges.groupByKey();
 
         // Step 7: create a new JavaPairRDD which will generate possible triads
         JavaPairRDD<Tuple2<Long, Long>, Long> possibleTriads = triads.flatMapToPair(new PairFlatMapFunction<Tuple2<Long, Iterable<Long>>, Tuple2<Long, Long>, Long>() {
@@ -75,7 +75,7 @@ public class mapreducePredictionTwitter {
 
                 return result.iterator();
             }
-        }).cache();
+        });
 
         // Step 8: create a new JavaPairRDD, which will generate triangles
         JavaPairRDD<Tuple2<Long, Long>, Iterable<Long>> triadsGrouped = possibleTriads.groupByKey().cache();
@@ -127,7 +127,7 @@ public class mapreducePredictionTwitter {
 
 
             }
-        }).cache();
+        });
 
         // Step 10: eliminate duplicate triangles and create unique triangles
         JavaRDD<Tuple3<Long, Long, Long>> uniqueTriangles = trianglesWithDuplicates.distinct();
